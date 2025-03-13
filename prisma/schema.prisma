@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String        @id @default(cuid())
+  clerkId       String        @unique
+  email         String        @unique
+  name          String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  image         String?
+  username      String        @unique
+  coverImage    String?
+  hideWin       Boolean?      @default(false)
+  hideTotal     Boolean?      @default(false)
+  hidePnL       Boolean?      @default(false)
+  blogs         Blog[]
+  comments      Comment[]
+  trades        Trade[]
+  likedBlogs    BlogLike[]
+  dislikedBlogs BlogDislike[]
+}
+
+model Trade {
+  id            String   @id @default(cuid())
+  symbol        String
+  type          String
+  amount        Int
+  leverage      Int
+  mode          String
+  entryPrice    Float
+  takeProfit    Float?
+  stopLoss      Float?
+  timestamp     BigInt
+  closePrice    Float
+  closeTime     BigInt
+  closeTimeDate DateTime @default(now())
+  pnlAmount     Float
+  pnlPercent    Float
+  userId        String
+  isWin         Boolean
+  user          User     @relation(fields: [userId], references: [id])
+}
+
+model Blog {
+  id               String        @id @default(cuid())
+  title            String
+  shortDescription String
+  content          String?
+  blogThumbnail    String?
+  publisherId      String
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  publisher        User          @relation(fields: [publisherId], references: [id])
+  comments         Comment[]
+  likes            BlogLike[]
+  dislikes         BlogDislike[]
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  userId    String
+  blogId    String
+  createdAt DateTime @default(now())
+  likes     Int?     @default(0)
+  dislikes  Int?     @default(0)
+  blog      Blog     @relation(fields: [blogId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model BlogLike {
+  id     String @id @default(cuid())
+  userId String
+  blogId String
+  user   User   @relation(fields: [userId], references: [id])
+  blog   Blog   @relation(fields: [blogId], references: [id])
+
+  @@unique([userId, blogId]) // Prevent duplicate likes from the same user
+}
+
+model BlogDislike {
+  id     String @id @default(cuid())
+  userId String
+  blogId String
+  user   User   @relation(fields: [userId], references: [id])
+  blog   Blog   @relation(fields: [blogId], references: [id])
+
+  @@unique([userId, blogId]) // Prevent duplicate dislikes from the same user
+}
